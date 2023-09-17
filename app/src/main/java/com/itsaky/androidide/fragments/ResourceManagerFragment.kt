@@ -15,28 +15,26 @@
  *   along with AndroidIDE.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.itsaky.androidide.activities
+package com.itsaky.androidide.fragments
 
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import android.view.View
 import com.google.android.material.tabs.TabLayoutMediator
+import com.itsaky.androidide.R
 import com.itsaky.androidide.adapters.ResourceListStateAdapter
-import com.itsaky.androidide.databinding.ActivityResourceManagerBinding
+import com.itsaky.androidide.databinding.FragmentResourceManagerBinding
 import com.itsaky.androidide.models.ResourceInfo
 import com.itsaky.androidide.models.ResourceType
 import com.itsaky.androidide.projects.ProjectManagerImpl
 import java.io.File
 
-class ResourceManagerActivity : AppCompatActivity() {
+class ResourceManagerFragment :
+  FragmentWithBinding<FragmentResourceManagerBinding>(R.layout.fragment_resource_manager,
+    FragmentResourceManagerBinding::bind) {
 
-  private var _binding: ActivityResourceManagerBinding? = null
-  private val binding: ActivityResourceManagerBinding
-    get() = checkNotNull(_binding)
 
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    _binding = ActivityResourceManagerBinding.inflate(layoutInflater)
-    setContentView(binding.root)
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    super.onViewCreated(view, savedInstanceState)
 
     val projectPath = ProjectManagerImpl.getInstance().projectPath
     val resourceInfoList = mutableListOf<ResourceInfo>()
@@ -58,7 +56,7 @@ class ResourceManagerActivity : AppCompatActivity() {
       file = File(layoutPath),
       resourceType = ResourceType.LAYOUT))
 
-    val adapter = ResourceListStateAdapter(supportFragmentManager, lifecycle,
+    val adapter = ResourceListStateAdapter(requireActivity().supportFragmentManager, lifecycle,
       resourceInfoList)
     binding.viewPager.adapter = adapter
     TabLayoutMediator(binding.tabs, binding.viewPager) { tab, position ->
@@ -67,4 +65,5 @@ class ResourceManagerActivity : AppCompatActivity() {
 
 
   }
+
 }

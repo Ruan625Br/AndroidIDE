@@ -18,13 +18,10 @@
 package com.itsaky.androidide.actions.sidebar
 
 import android.content.Context
-import android.content.Intent
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.itsaky.androidide.R
-import com.itsaky.androidide.actions.ActionData
-import com.itsaky.androidide.actions.requireContext
-import com.itsaky.androidide.activities.ResourceManagerActivity
+import com.itsaky.androidide.fragments.ResourceManagerFragment
 import kotlin.reflect.KClass
 
 /**
@@ -34,16 +31,10 @@ import kotlin.reflect.KClass
  */
 class ResourceManagerSidebarAction(context: Context, override val order: Int) : AbstractSidebarAction(){
   override val id: String = "ide.editor.sidebar.resource-manager"
-  override val fragmentClass: KClass<out Fragment>? = null
+  override val fragmentClass: KClass<out Fragment> = ResourceManagerFragment::class
 
   init {
-    label = "Resource Manager"
+    label = context.getString(R.string.title_resource_manager)
     icon = ContextCompat.getDrawable(context, R.drawable.ic_resource_manager)
-  }
-  override fun execAction(data: ActionData): Any {
-    val context = data.requireContext()
-    val intent = Intent(context, ResourceManagerActivity::class.java)
-    context.startActivity(intent)
-    return  true
   }
 }
