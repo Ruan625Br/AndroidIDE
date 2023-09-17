@@ -43,6 +43,7 @@ import com.itsaky.androidide.actions.sidebar.BuildVariantsSidebarAction
 import com.itsaky.androidide.actions.sidebar.CloseProjectSidebarAction
 import com.itsaky.androidide.actions.sidebar.FileTreeSidebarAction
 import com.itsaky.androidide.actions.sidebar.PreferencesSidebarAction
+import com.itsaky.androidide.actions.sidebar.ResourceManagerSidebarAction
 import com.itsaky.androidide.actions.sidebar.TerminalSidebarAction
 import com.itsaky.androidide.fragments.sidebar.EditorSidebarFragment
 import java.lang.ref.WeakReference
@@ -63,6 +64,7 @@ internal object EditorSidebarActions {
 
     @Suppress("KotlinConstantConditions")
     registry.registerAction(FileTreeSidebarAction(context, ++order))
+    registry.registerAction(ResourceManagerSidebarAction(context, ++order))
     registry.registerAction(BuildVariantsSidebarAction(context, ++order))
     registry.registerAction(TerminalSidebarAction(context, ++order))
     registry.registerAction(PreferencesSidebarAction(context, ++order))
