@@ -19,6 +19,7 @@ package com.itsaky.androidide.actions.filetree
 
 import android.content.Context
 import android.view.LayoutInflater
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import com.blankj.utilcode.util.FileIOUtils
 import com.itsaky.androidide.actions.ActionData
@@ -26,6 +27,7 @@ import com.itsaky.androidide.actions.requireFile
 import com.itsaky.androidide.adapters.viewholders.FileTreeViewHolder
 import com.itsaky.androidide.databinding.LayoutCreateFileJavaBinding
 import com.itsaky.androidide.eventbus.events.file.FileCreationEvent
+import com.itsaky.androidide.fragments.DialogCreateFileFragment
 import com.itsaky.androidide.preferences.databinding.LayoutDialogTextInputBinding
 import com.itsaky.androidide.projects.IProjectManager
 import com.itsaky.androidide.resources.R
@@ -214,8 +216,13 @@ class NewFileAction(context: Context, override val order: Int) :
     }
     builder.setNegativeButton(android.R.string.cancel, null)
     builder.setCancelable(false)
-    builder.create().show()
+   // builder.create().show()
+    val dialogCreateFileFragment = DialogCreateFileFragment()
+    val fragmentManger = (context  as AppCompatActivity).supportFragmentManager
+    dialogCreateFileFragment.show(fragmentManger, "Teste - Dialogo")
   }
+
+
 
   private fun isValidJavaName(s: CharSequence?) =
     s == null || !SourceVersion.isName(s) || SourceVersion.isKeyword(s)

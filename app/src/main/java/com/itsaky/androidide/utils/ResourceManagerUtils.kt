@@ -18,14 +18,16 @@
 package com.itsaky.androidide.utils
 
 import android.content.Context
-import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.drawable.BitmapDrawable
+import android.graphics.ColorFilter
+import android.graphics.Paint
+import android.graphics.PixelFormat
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.util.Xml
-import androidx.core.graphics.drawable.toDrawable
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
+import com.itsaky.androidide.extensions.getColorByAttr
 import org.xmlpull.v1.XmlPullParser
 import java.io.File
 import java.io.FileInputStream
@@ -42,6 +44,7 @@ object ResourceManagerUtils {
     }
     return file.absolutePath
   }
+
   fun getColor(colorValue: Int): ColorDrawable {
 
     return ColorDrawable(colorValue)
@@ -58,7 +61,7 @@ object ResourceManagerUtils {
       while (eventType != XmlPullParser.END_DOCUMENT) {
         if (eventType == XmlPullParser.START_TAG && parser.name == "color" && parser.getAttributeValue(
             null, "name") == colorName
-        ){
+        ) {
           parser.nextToken()
           val colorValue = parser.text
           return Color.parseColor(colorValue)
@@ -66,7 +69,7 @@ object ResourceManagerUtils {
         }
         eventType = parser.next()
       }
-    } catch (e: Exception){
+    } catch (e: Exception) {
       //e
     }
     return Color.BLACK
@@ -74,4 +77,38 @@ object ResourceManagerUtils {
 
   fun getLayout() {
   }
+
+  fun createDrawableWithText(text: String, context: Context): Drawable {
+    val backgroundColor = context.getColorByAttr(com.google.android.material.R.attr.colorPrimary)
+    val textColor = context.getColorByAttr(com.google.android.material.R.attr.colorOnPrimary)
+
+    return object : Drawable() {
+      override fun draw(canvas: Canvas) {
+        canvas.drawColor(backgroundColor)
+
+        val paint = Paint().apply {
+          color = textColor
+          textSize = 48f
+          textAlign = Paint.Align.CENTER
+        }
+
+        val x = bounds.width() / 2
+        val y = ((bounds.height()) / 2) - ((paint.descent() + paint.ascent()) / 2)
+
+
+        canvas.drawText(text, x.toFloat(), y, paint)
+      }
+
+      override fun setAlpha(alpha: Int) {}
+
+      override fun setColorFilter(colorFilter: ColorFilter?) {}
+
+      @Deprecated("Deprecated in Java",
+        ReplaceWith("PixelFormat.TRANSLUCENT", "android.graphics.PixelFormat"))
+      override fun getOpacity(): Int {
+        return PixelFormat.TRANSLUCENT
+      }
+    }
+  }
+
 }
