@@ -18,7 +18,7 @@
 package com.itsaky.androidide.extensions
 
 import android.content.Context
-import android.graphics.drawable.Drawable
+import android.graphics.Color
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
 import com.itsaky.androidide.R
@@ -29,7 +29,7 @@ import com.itsaky.androidide.utils.ResourceManagerUtils
 fun ResourceItem.getIcon(context: Context): Any? {
  return when(type){
     ResourceType.DRAWABLE -> ContextCompat.getDrawable(context, R.drawable.ic_file_image)
-    ResourceType.COLOR -> ResourceManagerUtils.getColor(info.toInt())
+    ResourceType.COLOR -> ResourceManagerUtils.getColor(Color.parseColor(info))
     ResourceType.LAYOUT -> AppCompatResources.getDrawable(context, R.drawable.ic_layout_72dp)!!
   }
 }

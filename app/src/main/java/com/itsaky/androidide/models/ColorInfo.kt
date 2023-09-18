@@ -15,6 +15,8 @@
  *   along with AndroidIDE.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+@file:OptIn(ExperimentalStdlibApi::class)
+
 package com.itsaky.androidide.models
 
 import java.io.File
@@ -22,9 +24,17 @@ import java.io.File
 data class ColorInfo(val file: File, val colorName: String, val colorValue: Int)
 
 fun ColorInfo.toResourceItem(): ResourceItem {
+  val hexFormat = HexFormat {
+    upperCase = false
+    number.prefix = "#"
+    number.removeLeadingZeros = true
+  }
+
+  val colorHex = colorValue.toHexString(hexFormat)
+
   return ResourceItem(
     name = colorName,
-    info = colorValue.toString(),
+    info = colorHex,
     type = ResourceType.COLOR,
     file = file
   )
