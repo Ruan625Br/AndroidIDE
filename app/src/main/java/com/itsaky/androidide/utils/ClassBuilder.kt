@@ -70,6 +70,17 @@ object ClassBuilder {
   }
 
   @JvmStatic
+  fun createAnnotation(packageName: String, className: String): String {
+    return toJavaFile(packageName, newAnnotationSpec(className)).toString()
+  }
+
+  private fun newAnnotationSpec(className: String): TypeSpec {
+    return TypeSpec.annotationBuilder(className)
+      .addModifiers(PUBLIC)
+      .build()
+  }
+
+  @JvmStatic
   fun createActivity(packageName: String, className: String): String {
     val onCreate =
       MethodSpec.methodBuilder("onCreate")

@@ -115,7 +115,42 @@ public class ProjectWriter {
     return ClassBuilder.createEnum(packageName, className);
   }
 
+  public static String createJavaAnnotation(String packageName, String className){
+    return ClassBuilder.createAnnotation(packageName, className);
+  }
+
   public static String createActivity(String packageName, String className) {
     return ClassBuilder.createActivity(packageName, className);
+  }
+
+  public static String createKotlinClass(String packageName, String className){
+    return KotlinClassBuilder.INSTANCE.createClass(packageName, className);
+  }
+
+   public static String createKotlinFile(String packageName, String className){
+    //test
+    return "package " + packageName;
+  }
+
+  public static String createKotlinInterface(String packageName, String className) {
+    return KotlinClassBuilder.INSTANCE.createInterface(packageName, className);
+  }
+  public static String createKotlinSealedInterface(String packageName, String className) {
+    return KotlinClassBuilder.INSTANCE.createSealedInterface(packageName, className);
+  }
+  public static String createKotlinDataClass(String packageName, String className) {
+    return KotlinClassBuilder.INSTANCE.createDataClass(packageName, className);
+  }
+  public static String createKotlinEnumClass(String packageName, String className) {
+    return KotlinClassBuilder.INSTANCE.createEnumClass(packageName, className);
+  }
+  public static String createKotlinSealedClass(String packageName, String className) {
+    return KotlinClassBuilder.INSTANCE.createSealedClass(packageName, className);
+  }
+  public static String createKotlinAnnotationClass(String packageName, String className) {
+    return KotlinClassBuilder.INSTANCE.createAnnotation(packageName, className);
+  }
+  public static String createKotlinObjectClass(String packageName, String className) {
+    return KotlinClassBuilder.INSTANCE.createObject(packageName, className);
   }
 }

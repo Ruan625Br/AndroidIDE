@@ -14,6 +14,8 @@ antlr4 = "4.13.1"
 androidx-work = "2.8.1"
 retrofit = "2.9.0"
 room = "2.6.0-beta01"
+legacy-support-v4 = "1.0.0"
+kotlinpoet = "1.14.2"
 
 
 [libraries]
@@ -99,6 +101,9 @@ xml-remark = { module = "com.kotcrab.remark:remark", version = "1.2.0" }
 xml-resolver = { module = "xml-resolver:xml-resolver", version = "1.2" }
 xml-jb-annotations = { module = "org.jetbrains:annotations", version = "24.0.1" }
 
+#Squareup
+squareup-kotlinpoet = { group = "com.squareup", name = "kotlinpoet", version.ref = "kotlinpoet"}
+
 # GIT
 git-jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version = "3.7.1.201504261725-r" }
 
@@ -126,6 +131,7 @@ tests-mockk = { module = "io.mockk:mockk", version = "1.13.7" }
 tooling-builderModel = { module = "com.android.tools.build:builder-model", version.ref = "agp-tooling" }
 tooling-gradleApi = { module = "org.gradle:gradle-tooling-api", version.ref = "gradle-tooling" }
 tooling-slf4j = { module = "org.slf4j:slf4j-api", version = "2.0.9" }
+legacy-support-v4 = { group = "androidx.legacy", name = "legacy-support-v4", version.ref = "legacy-support-v4" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

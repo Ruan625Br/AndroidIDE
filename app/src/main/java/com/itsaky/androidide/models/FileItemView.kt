@@ -17,16 +17,6 @@
 
 package com.itsaky.androidide.models
 
-import com.itsaky.androidide.utils.FileItemTypeUtils
+import android.view.View
 
-data class FileItemSubtype(val name: String, val fileSubtype: FileItemTypeUtils.Subtype): FileItem(){
-
-  override val itemName: String
-    get() = name
-  override val isSubtype: Boolean
-    get() = true
-
-  override val fileType: FileItemTypeUtils.Type
-    get() = fileSubtype.type
-
-}
+data class FileItemView(val parent: View, val child: View)

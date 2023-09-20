@@ -75,11 +75,15 @@ android {
     abortOnError = false
     disable.addAll(arrayOf("VectorPath", "NestedWeights", "ContentDescription", "SmallSp"))
   }
+  buildFeatures {
+    viewBinding = true
+  }
 }
 
 kapt { arguments { arg("eventBusIndex", "${BuildConfig.packageName}.events.AppEventsIndex") } }
 
 dependencies {
+  implementation(libs.legacy.support.v4)
   debugImplementation(libs.common.leakcanary)
 
   // Annotation processors
@@ -103,6 +107,8 @@ dependencies {
   implementation(libs.androidx.room.runtime)
   kapt(libs.androidx.room.compiler)
   implementation(libs.androidx.room.ktx)
+
+  implementation(libs.squareup.kotlinpoet)
 
 
   // AndroidX

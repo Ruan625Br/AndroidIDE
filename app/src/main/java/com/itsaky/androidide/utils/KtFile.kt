@@ -15,18 +15,7 @@
  *   along with AndroidIDE.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.itsaky.androidide.models
+package com.itsaky.androidide.utils
 
-import com.itsaky.androidide.utils.FileItemTypeUtils
-
-data class FileItemSubtype(val name: String, val fileSubtype: FileItemTypeUtils.Subtype): FileItem(){
-
-  override val itemName: String
-    get() = name
-  override val isSubtype: Boolean
-    get() = true
-
-  override val fileType: FileItemTypeUtils.Type
-    get() = fileSubtype.type
-
+class KtFile {
 }

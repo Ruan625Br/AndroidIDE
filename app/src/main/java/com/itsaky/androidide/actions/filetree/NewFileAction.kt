@@ -27,12 +27,16 @@ import com.itsaky.androidide.actions.requireFile
 import com.itsaky.androidide.adapters.viewholders.FileTreeViewHolder
 import com.itsaky.androidide.databinding.LayoutCreateFileJavaBinding
 import com.itsaky.androidide.eventbus.events.file.FileCreationEvent
-import com.itsaky.androidide.fragments.DialogCreateFileFragment
+import com.itsaky.androidide.fragments.BottomSheetCreateFileFragment
+import com.itsaky.androidide.models.FileItemSubtype
+import com.itsaky.androidide.models.FileItemView
 import com.itsaky.androidide.preferences.databinding.LayoutDialogTextInputBinding
 import com.itsaky.androidide.projects.IProjectManager
 import com.itsaky.androidide.resources.R
 import com.itsaky.androidide.utils.DialogUtils
 import com.itsaky.androidide.utils.Environment
+import com.itsaky.androidide.utils.FileItemTypeUtils
+import com.itsaky.androidide.utils.FileItemViewUtils
 import com.itsaky.androidide.utils.ProjectWriter
 import com.itsaky.androidide.utils.SingleTextWatcher
 import com.itsaky.androidide.utils.flashError
@@ -50,15 +54,13 @@ import java.util.regex.Pattern
  * @author Akash Yadav
  */
 class NewFileAction(context: Context, override val order: Int) :
-  BaseDirNodeAction(
-    context = context,
-    labelRes = R.string.new_file,
-    iconRes = R.drawable.ic_new_file
-  ) {
+  BaseDirNodeAction(context = context, labelRes = R.string.new_file,
+    iconRes = R.drawable.ic_new_file) {
 
   override val id: String = "ide.editor.fileTree.newFile"
 
   companion object {
+
     const val RES_PATH_REGEX = "/.*/src/.*/res"
     const val LAYOUT_RES_PATH_REGEX = "/.*/src/.*/res/layout"
     const val MENU_RES_PATH_REGEX = "/.*/src/.*/res/menu"
@@ -73,12 +75,8 @@ class NewFileAction(context: Context, override val order: Int) :
     createNewFile(context, node, file, false)
   }
 
-  private fun createNewFile(
-    context: Context,
-    node: TreeNode?,
-    file: File,
-    forceUnknownType: Boolean
-  ) {
+  private fun createNewFile(context: Context, node: TreeNode?, file: File,
+    forceUnknownType: Boolean) {
     if (forceUnknownType) {
       createNewEmptyFile(context, node, file)
       return
@@ -86,25 +84,20 @@ class NewFileAction(context: Context, override val order: Int) :
 
     val projectDir = IProjectManager.getInstance().projectDirPath
     Objects.requireNonNull(projectDir)
-    val isJava =
-      Pattern.compile(Pattern.quote(projectDir) + JAVA_PATH_REGEX).matcher(file.absolutePath).find()
-    val isRes =
-      Pattern.compile(Pattern.quote(projectDir) + RES_PATH_REGEX).matcher(file.absolutePath).find()
-    val isLayoutRes =
-      Pattern.compile(Pattern.quote(projectDir) + LAYOUT_RES_PATH_REGEX)
-        .matcher(file.absolutePath)
-        .find()
-    val isMenuRes =
-      Pattern.compile(Pattern.quote(projectDir) + MENU_RES_PATH_REGEX)
-        .matcher(file.absolutePath)
-        .find()
-    val isDrawableRes =
-      Pattern.compile(Pattern.quote(projectDir) + DRAWABLE_RES_PATH_REGEX)
-        .matcher(file.absolutePath)
-        .find()
+    val isJava = Pattern.compile(Pattern.quote(projectDir) + JAVA_PATH_REGEX)
+      .matcher(file.absolutePath).find()
+    val isRes = Pattern.compile(Pattern.quote(projectDir) + RES_PATH_REGEX)
+      .matcher(file.absolutePath).find()
+    val isLayoutRes = Pattern.compile(Pattern.quote(projectDir) + LAYOUT_RES_PATH_REGEX)
+      .matcher(file.absolutePath).find()
+    val isMenuRes = Pattern.compile(Pattern.quote(projectDir) + MENU_RES_PATH_REGEX)
+      .matcher(file.absolutePath).find()
+    val isDrawableRes = Pattern.compile(Pattern.quote(projectDir) + DRAWABLE_RES_PATH_REGEX)
+      .matcher(file.absolutePath).find()
 
     if (isJava) {
-      createJavaClass(context, node, file)
+      //createJavaClass(context, node, file)
+      showBottomSheetFragment(node, file, context)
       return
     }
 
@@ -133,23 +126,21 @@ class NewFileAction(context: Context, override val order: Int) :
 
   private fun createJavaClass(context: Context, node: TreeNode?, file: File) {
     val builder = DialogUtils.newMaterialDialogBuilder(context)
-    val binding: LayoutCreateFileJavaBinding =
-      LayoutCreateFileJavaBinding.inflate(LayoutInflater.from(context))
+    val binding: LayoutCreateFileJavaBinding = LayoutCreateFileJavaBinding.inflate(
+      LayoutInflater.from(context))
     binding.typeGroup.addOnButtonCheckedListener { _, _, _ ->
       binding.createLayout.isVisible = binding.typeGroup.checkedButtonId == binding.typeActivity.id
     }
-    binding.name.editText?.addTextChangedListener(
-      object : SingleTextWatcher() {
-        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-          if (isValidJavaName(s)) {
-            binding.name.isErrorEnabled = true
-            binding.name.error = context.getString(R.string.msg_invalid_name)
-          } else {
-            binding.name.isErrorEnabled = false
-          }
+    binding.name.editText?.addTextChangedListener(object : SingleTextWatcher() {
+      override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+        if (isValidJavaName(s)) {
+          binding.name.isErrorEnabled = true
+          binding.name.error = context.getString(R.string.msg_invalid_name)
+        } else {
+          binding.name.isErrorEnabled = false
         }
       }
-    )
+    })
     builder.setView(binding.root)
     builder.setTitle(R.string.new_java_class)
     builder.setPositiveButton(R.string.text_create) { dialogInterface, _ ->
@@ -160,54 +151,33 @@ class NewFileAction(context: Context, override val order: Int) :
       }
 
       val name: String = binding.name.editText!!.text.toString().trim()
-      val autoLayout =
-        binding.typeGroup.checkedButtonId == binding.typeActivity.id &&
-          binding.createLayout.isChecked
+      val autoLayout = binding.typeGroup.checkedButtonId == binding.typeActivity.id && binding.createLayout.isChecked
       val pkgName = ProjectWriter.getPackageName(file)
       if (pkgName == null || pkgName.trim { it <= ' ' }.isEmpty()) {
         flashError(R.string.msg_get_package_failed)
         return@setPositiveButton
       }
 
-      val id: Int = binding.typeGroup.checkedButtonId
-      val javaName = if (name.endsWith(".java")) name else "$name.java"
+      val id: Int = binding.typeGroup.checkedButtonId/*
+            val javaName = if (name.endsWith(".java")) name else "$name.java"
+      */
+      val javaName = "$name.kt"
       val className = if (!name.contains(".")) name else name.substring(0, name.lastIndexOf("."))
-      val created =
-        when (id) {
-          binding.typeClass.id ->
-            createFile(
-              context,
-              node,
-              file,
-              javaName,
-              ProjectWriter.createJavaClass(pkgName, className)
-            )
-          binding.typeInterface.id ->
-            createFile(
-              context,
-              node,
-              file,
-              javaName,
-              ProjectWriter.createJavaInterface(pkgName, className)
-            )
-          binding.typeEnum.id ->
-            createFile(
-              context,
-              node,
-              file,
-              javaName,
-              ProjectWriter.createJavaEnum(pkgName, className)
-            )
-          binding.typeActivity.id ->
-            createFile(
-              context,
-              node,
-              file,
-              javaName,
-              ProjectWriter.createActivity(pkgName, className)
-            )
-          else -> createFile(context, node, file, name, "")
-        }
+      val created = when (id) {
+        binding.typeClass.id -> createFile(context, node, file, javaName,
+          ProjectWriter.createKotlinClass(pkgName, className))
+
+        binding.typeInterface.id -> createFile(context, node, file, javaName,
+          ProjectWriter.createKotlinInterface(pkgName, className))
+
+        binding.typeEnum.id -> createFile(context, node, file, javaName,
+          ProjectWriter.createKotlinDataClass(pkgName, className))
+
+        binding.typeActivity.id -> createFile(context, node, file, javaName,
+          ProjectWriter.createActivity(pkgName, className))
+
+        else -> createFile(context, node, file, name, "")
+      }
 
       if (created && autoLayout) {
         val packagePath = pkgName.toString().replace(".", "/")
@@ -216,33 +186,105 @@ class NewFileAction(context: Context, override val order: Int) :
     }
     builder.setNegativeButton(android.R.string.cancel, null)
     builder.setCancelable(false)
-   // builder.create().show()
-    val dialogCreateFileFragment = DialogCreateFileFragment()
-    val fragmentManger = (context  as AppCompatActivity).supportFragmentManager
-    dialogCreateFileFragment.show(fragmentManger, "Teste - Dialogo")
+    // builder.create().show()
+
   }
 
+  fun showBottomSheetFragment(node: TreeNode?, file: File, context: Context) {
+    val bottomSheetCreateFileFragment = BottomSheetCreateFileFragment { fileItemViewList, fileItemSub ->
+      onFileItemClick(fileItemViewList, fileItemSub, node, file, context)
+    }
+
+    val fragmentManger = (context as AppCompatActivity).supportFragmentManager
+    bottomSheetCreateFileFragment.show(fragmentManger, "Teste - Dialogo")
+  }
+
+  fun onFileItemClick(fileItemViewList: List<FileItemView>, fileItemSub: FileItemSubtype,
+    node: TreeNode?, file: File, context: Context): Boolean {
+
+    val extension = FileItemViewUtils.getExtensionSimple(fileItemSub)!!
+    val text = FileItemViewUtils.getTextInputLayout(0, fileItemViewList)
+    //Use only if parent has only one child
+    val name =  text + extension
+    val pkgName = ProjectWriter.getPackageName(file)
+    val className = if (!name.contains(".")) name else name.substring(0, name.lastIndexOf("."))
+
+    /*
+        if (!isValidJavaName(name)) {
+          return false
+        }
+    */
+
+    if (pkgName == null || pkgName.trim { it <= ' ' }.isEmpty()) {
+      flashError(R.string.msg_get_package_failed)
+      return false
+    }
+
+    when (fileItemSub.fileSubtype) {
+      FileItemTypeUtils.Subtype.FRAGMENT_BLANK -> TODO()
+      FileItemTypeUtils.Subtype.FRAGMENT_LIST -> TODO()
+      FileItemTypeUtils.Subtype.FRAGMENT_WITH_VIEW_MODEL -> TODO()
+      FileItemTypeUtils.Subtype.BASIC_VIEWS_ACTIVITY -> TODO()
+      FileItemTypeUtils.Subtype.EMPTY_VIEWS_ACTIVITY -> TODO()
+      FileItemTypeUtils.Subtype.FULLSCREEN_VIEWS_ACTIVITY -> TODO()
+      FileItemTypeUtils.Subtype.CLASS_JAVA -> createFile(context, node, file, name,
+        ProjectWriter.createJavaClass(pkgName, className))
+
+      FileItemTypeUtils.Subtype.INTERFACE_JAVA -> createFile(context, node, file, name,
+        ProjectWriter.createJavaInterface(pkgName, className))
+
+      FileItemTypeUtils.Subtype.ENUM_JAVA -> createFile(context, node, file, name,
+        ProjectWriter.createJavaEnum(pkgName, className))
+
+      FileItemTypeUtils.Subtype.ANNOTATION_JAVA -> createFile(context, node, file, name,
+        ProjectWriter.createJavaAnnotation(pkgName, className))
+
+      FileItemTypeUtils.Subtype.CLASS_KOTLIN -> createFile(context, node, file, name,
+        ProjectWriter.createKotlinClass(pkgName, className))
+
+      FileItemTypeUtils.Subtype.FILE_KOTLIN -> createFile(context, node, file, name,
+        ProjectWriter.createKotlinFile(pkgName, className))
+
+      FileItemTypeUtils.Subtype.INTERFACE_KOTLIN -> createFile(context, node, file, name,
+        ProjectWriter.createKotlinInterface(pkgName, className))
+
+      FileItemTypeUtils.Subtype.SEALED_INTERFACE_KOTLIN -> createFile(context, node, file,
+        name,
+        ProjectWriter.createKotlinSealedInterface(pkgName, className))
+
+      FileItemTypeUtils.Subtype.DATA_CLASS_KOTLIN -> createFile(context, node, file, name,
+        ProjectWriter.createKotlinDataClass(pkgName, className))
+
+      FileItemTypeUtils.Subtype.ENUM_CLASS_KOTLIN -> createFile(context, node, file, name,
+
+        ProjectWriter.createKotlinEnumClass(pkgName, className))
+
+      FileItemTypeUtils.Subtype.SEALED_CLASS_KOTLIN -> createFile(context, node, file, name,
+        ProjectWriter.createKotlinSealedClass(pkgName, className))
+
+      FileItemTypeUtils.Subtype.ANNOTATION_KOTLIN -> createFile(context, node, file, name,
+        ProjectWriter.createKotlinAnnotationClass(pkgName, className))
+
+      FileItemTypeUtils.Subtype.OBJECT_KOTLIN -> createFile(context, node, file, name,
+        ProjectWriter.createKotlinObjectClass(pkgName, className))
+    }
+
+    return true
+
+
+  }
 
 
   private fun isValidJavaName(s: CharSequence?) =
     s == null || !SourceVersion.isName(s) || SourceVersion.isKeyword(s)
 
   private fun createLayoutRes(context: Context, node: TreeNode?, file: File) {
-    createNewFileWithContent(
-      context,
-      node,
-      Environment.mkdirIfNotExits(file),
-      ProjectWriter.createLayout(),
-      ".xml"
-    )
+    createNewFileWithContent(context, node, Environment.mkdirIfNotExits(file),
+      ProjectWriter.createLayout(), ".xml")
   }
 
-  private fun createAutoLayout(
-    context: Context,
-    directory: File,
-    fileName: String,
-    packagePath: String
-  ) {
+  private fun createAutoLayout(context: Context, directory: File, fileName: String,
+    packagePath: String) {
     val dir = directory.toString().replace("java/$packagePath", "res/layout/")
     val layoutName = ProjectWriter.createLayoutName(fileName.replace(".java", ".xml"))
     val newFileLayout = File(dir, layoutName)
@@ -260,33 +302,19 @@ class NewFileAction(context: Context, override val order: Int) :
   }
 
   private fun createMenuRes(context: Context, node: TreeNode?, file: File) {
-    createNewFileWithContent(
-      context,
-      node,
-      Environment.mkdirIfNotExits(file),
-      ProjectWriter.createMenu(),
-      ".xml"
-    )
+    createNewFileWithContent(context, node, Environment.mkdirIfNotExits(file),
+      ProjectWriter.createMenu(), ".xml")
   }
 
   private fun createDrawableRes(context: Context, node: TreeNode?, file: File) {
-    createNewFileWithContent(
-      context,
-      node,
-      Environment.mkdirIfNotExits(file),
-      ProjectWriter.createDrawable(),
-      ".xml"
-    )
+    createNewFileWithContent(context, node, Environment.mkdirIfNotExits(file),
+      ProjectWriter.createDrawable(), ".xml")
   }
 
   private fun createNewResource(context: Context, node: TreeNode?, file: File) {
-    val labels =
-      arrayOf(
-        context.getString(R.string.restype_drawable),
-        context.getString(R.string.restype_layout),
-        context.getString(R.string.restype_menu),
-        context.getString(R.string.restype_other)
-      )
+    val labels = arrayOf(context.getString(R.string.restype_drawable),
+      context.getString(R.string.restype_layout), context.getString(R.string.restype_menu),
+      context.getString(R.string.restype_other))
     val builder = DialogUtils.newMaterialDialogBuilder(context)
     builder.setTitle(R.string.new_xml_resource)
     builder.setItems(labels) { _, position ->
@@ -304,12 +332,8 @@ class NewFileAction(context: Context, override val order: Int) :
     createNewFileWithContent(context, node, file, "")
   }
 
-  private fun createNewFileWithContent(
-    context: Context,
-    node: TreeNode?,
-    file: File,
-    content: String
-  ) {
+  private fun createNewFileWithContent(context: Context, node: TreeNode?, file: File,
+    content: String) {
     createNewFileWithContent(context, node, file, content, null)
   }
 
@@ -325,10 +349,8 @@ class NewFileAction(context: Context, override val order: Int) :
     binding.name.editText!!.setHint(R.string.file_name)
     builder.setTitle(R.string.new_file)
     builder.setMessage(
-      context.getString(R.string.msg_can_contain_slashes) +
-        "\n\n" +
-        context.getString(R.string.msg_newfile_dest, folder.absolutePath)
-    )
+      context.getString(R.string.msg_can_contain_slashes) + "\n\n" + context.getString(
+        R.string.msg_newfile_dest, folder.absolutePath))
     builder.setView(binding.root)
     builder.setCancelable(false)
     builder.setPositiveButton(R.string.text_create) { dialogInterface, _ ->
@@ -343,13 +365,8 @@ class NewFileAction(context: Context, override val order: Int) :
     builder.create().show()
   }
 
-  private fun createFile(
-    context: Context,
-    node: TreeNode?,
-    directory: File,
-    name: String,
-    content: String
-  ): Boolean {
+  private fun createFile(context: Context, node: TreeNode?, directory: File, name: String,
+    content: String): Boolean {
     if (name.length !in 1..40 || name.startsWith("/")) {
       flashError(R.string.msg_invalid_name)
       return false

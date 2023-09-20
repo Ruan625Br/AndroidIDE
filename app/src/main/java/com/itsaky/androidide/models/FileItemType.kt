@@ -19,7 +19,7 @@ package com.itsaky.androidide.models
 
 import com.itsaky.androidide.utils.FileItemTypeUtils
 
-data class FileItemType(val name: String, val type: FileItemTypeUtils.Type, val subTypeList: List<FileItemSubtype>) : FileItem( ){
+data class FileItemType(val type: FileItemTypeUtils.Type, val name: String = type.typeName , val subTypeList: List<FileItemSubtype>) : FileItem(){
 
   override val itemName: String
     get() = name
@@ -31,7 +31,8 @@ data class FileItemType(val name: String, val type: FileItemTypeUtils.Type, val 
 
 }
 
-abstract class FileItem(){
+abstract class FileItem() {
+
   abstract val itemName: String
   abstract val isSubtype: Boolean
   abstract val fileType: FileItemTypeUtils.Type

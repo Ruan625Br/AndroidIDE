@@ -17,26 +17,32 @@
 
 package com.itsaky.androidide.fragments
 
+import android.annotation.SuppressLint
 import android.os.Bundle
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
-import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.itsaky.androidide.adapters.FileItemAdapter
-import com.itsaky.androidide.databinding.FragmentDialogCreateFileBinding
+import com.itsaky.androidide.databinding.FragmentBottomSheetCreateFileBinding
 import com.itsaky.androidide.models.FileItem
+import com.itsaky.androidide.models.FileItemSubtype
+import com.itsaky.androidide.models.FileItemView
 import com.itsaky.androidide.utils.FileItemTypeUtils
+import com.itsaky.androidide.utils.FileItemViewUtils
 import com.itsaky.androidide.viewmodel.FileItemListViewModel
 
 
-class DialogCreateFileFragment : BaseDialogFragment() {
+class BottomSheetCreateFileFragment(
+  private val onFileItemClick: ((List<FileItemView>, FileItemSubtype) -> Boolean)? = null
+) : BottomSheetDialogFragment() {
 
-  private var _binding: FragmentDialogCreateFileBinding? = null
+  private var _binding: FragmentBottomSheetCreateFileBinding? = null
   private val binding get() = _binding!!
   private var adapter: FileItemAdapter? = null
+
   private val viewModel: FileItemListViewModel by lazy {
     ViewModelProvider(this,
       ViewModelProvider.NewInstanceFactory())[FileItemListViewModel::class.java]
@@ -44,19 +50,20 @@ class DialogCreateFileFragment : BaseDialogFragment() {
 
   override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
     savedInstanceState: Bundle?): View {
-    _binding = FragmentDialogCreateFileBinding.inflate(inflater, container, false)
+    _binding = FragmentBottomSheetCreateFileBinding.inflate(inflater, container, false)
     return binding.root
   }
 
-
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-    super.onViewCreated(view, savedInstanceState)
-
     viewModel.setup(FileItemTypeUtils.getFileItemTypeList())
 
     setupRecyclerView()
     observeViewModel()
+  }
 
+  override fun onDestroyView() {
+    super.onDestroyView()
+    _binding = null
   }
 
   private fun observeViewModel() {
@@ -75,18 +82,56 @@ class DialogCreateFileFragment : BaseDialogFragment() {
       if (!fileItem.isSubtype) {
         initTransition(false)
         viewModel.setup(FileItemTypeUtils.getFileItemSubtypesByType(fileItem.fileType))
-
+      } else {
+        initTransition(false)
+        onSubtypeClick((fileItem as FileItemSubtype))
       }
+      updateTitle(fileItem)
     }
     binding.list.adapter = adapter
   }
 
- private fun initTransition(reset: Boolean = false){
+  private fun onSubtypeClick(subtype: FileItemSubtype){
+    setupLayoutCreateFile(subtype)
+  }
+
+  private fun setupLayoutCreateFile(file: FileItemSubtype){
+    val fileItemViewList = FileItemViewUtils.getSubtypeViews(file.fileSubtype, requireContext())
+
+    fileItemViewList.forEachIndexed { _, fileItem ->
+      binding.layoutCreateFile.container.addView(fileItem.parent)
+    }
+    binding.layoutCreateFile.base.translationX = binding.layoutCreateFile.base.width.toFloat()
+    binding.layoutCreateFile.base.visibility = View.VISIBLE
+    binding.layoutCreateFile.base.animate()
+      .translationX(0f)
+      .setDuration(300)
+      .start()
+
+    binding.layoutCreateFile.buttonFinish.setOnClickListener {
+     val result = onFileItemClick?.invoke(fileItemViewList, file)?: false
+      if (result){
+        dismiss()
+      }
+    }
+
+  }
+
+  @SuppressLint("SetTextI18n")
+  private fun updateTitle(fileItem: FileItem){
+    binding.title.text = "New " + fileItem.fileType.typeName
+    binding.title.alpha = 0f
+    binding.title.animate().alpha(1f).setDuration(300).start()
+
+  }
+
+  private fun initTransition(reset: Boolean = false){
     if (reset) {
-      binding.list.translationX = 0f
+      binding.list.animate().translationX(0f).setDuration(300).start()
     }else {
       val translationX = -binding.list.width.toFloat()
-      binding.list.translationX = translationX
+      binding.list.animate().translationX(translationX).setDuration(300).start()
     }
   }
+
 }
