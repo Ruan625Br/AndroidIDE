@@ -12,6 +12,7 @@ plugins {
   id("kotlin-parcelize")
   id("com.google.android.gms.oss-licenses-plugin")
   id("androidx.navigation.safeargs.kotlin")
+
 }
 
 android {
@@ -97,6 +98,12 @@ dependencies {
 
   // Git
   implementation(libs.git.jgit)
+
+  // Room
+  implementation(libs.androidx.room.runtime)
+  kapt(libs.androidx.room.compiler)
+  implementation(libs.androidx.room.ktx)
+
 
   // AndroidX
   implementation(libs.androidx.splashscreen)

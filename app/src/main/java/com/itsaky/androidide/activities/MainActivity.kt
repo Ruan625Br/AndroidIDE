@@ -36,6 +36,7 @@ import com.itsaky.androidide.activities.editor.EditorActivityKt
 import com.itsaky.androidide.app.BaseApplication
 import com.itsaky.androidide.app.LimitlessIDEActivity
 import com.itsaky.androidide.databinding.ActivityMainBinding
+import com.itsaky.androidide.models.toProjectInfoDetails
 import com.itsaky.androidide.preferences.internal.NO_OPENED_PROJECT
 import com.itsaky.androidide.preferences.internal.autoOpenProjects
 import com.itsaky.androidide.preferences.internal.confirmProjectOpen
@@ -43,6 +44,7 @@ import com.itsaky.androidide.preferences.internal.lastOpenedProject
 import com.itsaky.androidide.preferences.internal.statConsentDialogShown
 import com.itsaky.androidide.preferences.internal.statOptIn
 import com.itsaky.androidide.projects.ProjectManagerImpl
+import com.itsaky.androidide.provider.IDEViewModelProvider
 import com.itsaky.androidide.resources.R.string
 import com.itsaky.androidide.templates.ITemplateProvider
 import com.itsaky.androidide.utils.DialogUtils
@@ -51,13 +53,16 @@ import com.itsaky.androidide.utils.flashError
 import com.itsaky.androidide.utils.flashInfo
 import com.itsaky.androidide.viewmodel.MainViewModel
 import com.itsaky.androidide.viewmodel.MainViewModel.Companion.SCREEN_MAIN
+import com.itsaky.androidide.viewmodel.MainViewModel.Companion.SCREEN_PROJECT_RECENT_LIST
 import com.itsaky.androidide.viewmodel.MainViewModel.Companion.SCREEN_TEMPLATE_DETAILS
 import com.itsaky.androidide.viewmodel.MainViewModel.Companion.SCREEN_TEMPLATE_LIST
+import com.itsaky.androidide.viewmodel.ProjectInfoViewModel
 import java.io.File
 
 class MainActivity : LimitlessIDEActivity() {
 
   private val viewModel by viewModels<MainViewModel>()
+  private val projectInfoViewModel: ProjectInfoViewModel by viewModels { IDEViewModelProvider.Factory }
   private var _binding: ActivityMainBinding? = null
 
   private val onBackPressedCallback = object : OnBackPressedCallback(true) {
@@ -162,6 +167,8 @@ class MainActivity : LimitlessIDEActivity() {
       // template list -> template details
       // ------- OR -------
       // template details -> template list
+      // ------- OR -------
+      // project list -> home
       val setAxisToX =
         (previous == SCREEN_TEMPLATE_LIST || previous == SCREEN_TEMPLATE_DETAILS) &&
             (screen == SCREEN_TEMPLATE_LIST || screen == SCREEN_TEMPLATE_DETAILS)
@@ -172,7 +179,7 @@ class MainActivity : LimitlessIDEActivity() {
         MaterialSharedAxis.Y
       }
 
-      val isForward = (screen ?: 0) - previous == 1
+      val isForward = (screen ?: 0) - previous >= 1
 
       val transition = MaterialSharedAxis(axis, isForward)
       transition.doOnEnd {
@@ -188,10 +195,11 @@ class MainActivity : LimitlessIDEActivity() {
       SCREEN_MAIN -> binding.main
       SCREEN_TEMPLATE_LIST -> binding.templateList
       SCREEN_TEMPLATE_DETAILS -> binding.templateDetails
+      SCREEN_PROJECT_RECENT_LIST -> binding.projectList
       else -> throw IllegalArgumentException("Invalid screen id: '$screen'")
     }
 
-    for (fragment in arrayOf(binding.main, binding.templateList, binding.templateDetails)) {
+    for (fragment in arrayOf(binding.main, binding.templateList, binding.templateDetails, binding.projectList)) {
       fragment.isVisible = fragment == currentFragment
     }
   }
@@ -284,6 +292,7 @@ class MainActivity : LimitlessIDEActivity() {
   }
 
   internal fun openProject(root: File) {
+    projectInfoViewModel.saveProjectInfo(root.toProjectInfoDetails())
     ProjectManagerImpl.getInstance().projectPath = root.absolutePath
     startActivity(Intent(this, EditorActivityKt::class.java))
   }

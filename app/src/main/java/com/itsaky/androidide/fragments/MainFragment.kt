@@ -52,6 +52,8 @@ class MainFragment : BaseFragment() {
       R.drawable.ic_add) { showCreateProject() }
     val openProject = MainScreenAction(string.msg_open_existing_project,
       R.drawable.ic_folder) { pickDirectory() }
+    val projectList = MainScreenAction(string.msg_recently_opened_projects,
+      R.drawable.ic_widget_list_view) { showProjectList() }
     val cloneGitRepository = MainScreenAction(string.git_clone_repo,
       R.drawable.ic_git) { cloneGitRepo() }
     val openTerminal =
@@ -68,7 +70,7 @@ class MainFragment : BaseFragment() {
     }
 
     binding!!.actions.adapter = MainActionsListAdapter(
-      listOf(createProject, openProject, cloneGitRepository, openTerminal,
+      listOf(createProject, projectList, openProject, cloneGitRepository, openTerminal,
         preferences, docs, sponsor))
   }
 
@@ -83,6 +85,9 @@ class MainFragment : BaseFragment() {
 
   private fun showCreateProject() {
     viewModel.setScreen(MainViewModel.SCREEN_TEMPLATE_LIST)
+  }
+  private fun showProjectList() {
+    viewModel.setScreen(MainViewModel.SCREEN_PROJECT_RECENT_LIST)
   }
 
   fun openProject(root: File) {
